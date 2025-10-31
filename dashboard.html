@@ -1,0 +1,287 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Dashboard - KARTEJI</title>
+  <link rel="stylesheet" href="./assets/css/style.css">
+  <link rel="stylesheet" href="./assets/css/glass.css">
+  <link rel="stylesheet" href="./assets/css/dashboard.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    window.__app_id = "karteji";
+    window.__firebase_config = JSON.stringify({
+      apiKey: "AIzaSyAjNVTi5ZjZDLRcfxXmf2gWmHswSHM4d8E",
+      authDomain: "karteji.firebaseapp.com",
+      projectId: "karteji",
+      storageBucket: "karteji.firebasestorage.app",
+      messagingSenderId: "828706251907",
+      appId: "1:828706251907:web:54825185b074209c4fe7b6",
+      measurementId: "G-PPGRMBXGHW"
+    });
+  </script>
+</head>
+<body>
+  <header class="header glass shadow">
+    <div class="container" style="display:flex;justify-content:space-between;align-items:center">
+      <div class="brand"><img src="./assets/img/logo.png" width="32" height="32" style="border-radius:8px"><strong>Dashboard</strong></div>
+      <nav class="nav">
+        <select id="module-select" class="input" style="width:220px">
+          <option value="news">Berita</option>
+          <option value="umkm">UMKM</option>
+          <option value="events">Kegiatan</option>
+          <option value="announcements">Pengumuman</option>
+          <option value="gallery">Galeri</option>
+          <option value="documents">Dokumen</option>
+          <option value="finance">Kas</option>
+          <option value="members">Anggota</option>
+          <option value="org">Struktur</option>
+          <option value="esport">E-Sport</option>
+          <option value="roles">Role User (Superadmin)</option>
+        </select>
+        <a class="btn" href="./index.html">Beranda</a>
+        <div id="user-widget" class="hidden">
+          <img id="user-avatar" src="./assets/img/logo.png" width="36" height="36" style="border-radius:999px;border:1px solid rgba(255,255,255,.2)">
+          <div>
+            <div id="user-name" style="font-size:.9rem;font-weight:600">Memuat...</div>
+            <div id="user-role" class="badge">ROLE</div>
+          </div>
+        </div>
+        <button id="logout" class="btn" style="background:#ef4444">Logout</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="panel" class="card rounded" style="padding:16px">
+      <div class="toolbar">
+        <div class="title"><h3 id="panel-title" style="margin:0">Berita</h3></div>
+        <button id="btn-add" class="btn">Tambah</button>
+      </div>
+      <div id="summary" class="hidden"></div>
+      <div id="list" class="list"></div>
+    </div>
+  </main>
+
+  <div id="modal" class="modal-backdrop">
+    <div class="modal card rounded" style="padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h3 id="modal-title" style="margin:0">Editor</h3>
+        <button id="modal-close" class="btn" style="background:transparent;border:1px solid rgba(255,255,255,.2)">Tutup</button>
+      </div>
+      <form id="form" class="grid" style="margin-top:12px"></form>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+        <button id="modal-cancel" class="btn" style="background:transparent;border:1px solid rgba(255,255,255,.2)">Batal</button>
+        <button id="modal-save" class="btn">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth, db } from './scripts/firebase.js';
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { collection, getDocs, query, orderBy, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { listDocs, addDocCol, updateDocCol, deleteDocCol, getOne } from './scripts/crud.js';
+    import { uploadToCloudinary } from './scripts/cloudinary.js';
+    import { renderRoleManager } from './scripts/role.js';
+    import './scripts/ui.js';
+    import { watchAuthChanges, doLogout } from './scripts/auth.js';
+
+    const MODULES = {
+      news: { label:'Berita', fields:[
+        {k:'title', t:'text', label:'Judul', req:true},
+        {k:'content', t:'textarea', label:'Konten', req:true},
+        {k:'imageUrl', t:'image', label:'Gambar'},
+      ], order:['createdAt','desc']},
+      umkm: { label:'UMKM', fields:[
+        {k:'name', t:'text', label:'Nama', req:true},
+        {k:'desc', t:'textarea', label:'Deskripsi'},
+        {k:'whatsapp', t:'text', label:'WhatsApp'},
+        {k:'imageUrl', t:'image', label:'Foto'},
+      ], order:['createdAt','desc']},
+      events: { label:'Kegiatan', fields:[
+        {k:'title', t:'text', label:'Judul', req:true},
+        {k:'date', t:'date', label:'Tanggal', req:true},
+        {k:'place', t:'text', label:'Tempat'},
+        {k:'desc', t:'textarea', label:'Deskripsi'},
+        {k:'imageUrl', t:'image', label:'Poster'}
+      ], order:['date','desc']},
+      announcements: { label:'Pengumuman', fields:[
+        {k:'title', t:'text', label:'Judul', req:true},
+        {k:'content', t:'textarea', label:'Isi', req:true}
+      ], order:['createdAt','desc']},
+      gallery: { label:'Galeri', fields:[
+        {k:'caption', t:'text', label:'Caption'},
+        {k:'imageUrl', t:'image', label:'Foto', req:true},
+      ], order:['createdAt','desc']},
+      documents: { label:'Dokumen', fields:[
+        {k:'title', t:'text', label:'Judul', req:true},
+        {k:'fileUrl', t:'file', label:'File (PDF/DOC)'},
+        {k:'notes', t:'textarea', label:'Catatan'},
+      ], order:['createdAt','desc']},
+      finance: { label:'Kas', fields:[
+        {k:'date', t:'date', label:'Tanggal', req:true},
+        {k:'type', t:'select', label:'Jenis', options:[{v:'in',t:'Masuk (+)'},{v:'out',t:'Keluar (-)'}], req:true},
+        {k:'amount', t:'number', label:'Nominal (Rp)', req:true},
+        {k:'note', t:'text', label:'Catatan'},
+      ], order:['date','desc'], summary:true},
+      members: { label:'Anggota', fields:[
+        {k:'name', t:'text', label:'Nama', req:true},
+        {k:'phone', t:'text', label:'HP/WA'},
+        {k:'roleText', t:'text', label:'Keterangan Jabatan'},
+        {k:'photoUrl', t:'image', label:'Foto'},
+      ], order:['createdAt','desc']},
+      org: { label:'Struktur', fields:[
+        {k:'name', t:'text', label:'Nama', req:true},
+        {k:'position', t:'text', label:'Jabatan', req:true},
+        {k:'rank', t:'number', label:'Urutan', req:true},
+        {k:'photoUrl', t:'image', label:'Foto'},
+      ], order:['rank','asc']},
+      esport: { label:'E-Sport', fields:[
+        {k:'team', t:'text', label:'Nama Tim', req:true},
+        {k:'game', t:'text', label:'Game', req:true},
+        {k:'rank', t:'text', label:'Peringkat'},
+      ], order:['createdAt','desc']},
+      roles: { label:'Role User' }
+    };
+
+    const panel = document.getElementById('panel');
+    const listEl = document.getElementById('list');
+    const titleEl = document.getElementById('panel-title');
+    const btnAdd = document.getElementById('btn-add');
+    const moduleSel = document.getElementById('module-select');
+    const modal = document.getElementById('modal');
+    const form = document.getElementById('form');
+    const modalTitle = document.getElementById('modal-title');
+    const summary = document.getElementById('summary');
+
+    let CURRENT = 'news';
+    let EDIT_ID = null;
+    let FILES = {};
+
+    function showModal(show){ modal.style.display = show ? 'flex' : 'none'; }
+
+    function inputEl(f){
+      const wrap = document.createElement('div');
+      const label = document.createElement('label'); label.textContent = f.label + (f.req?' *':'');
+      label.style.opacity = .85; label.style.display='block'; label.style.marginBottom='6px';
+      let el;
+      if (f.t==='textarea'){ el=document.createElement('textarea'); el.rows=4; }
+      else if (f.t==='select'){ el=document.createElement('select'); (f.options||[]).forEach(o=>{ const op=document.createElement('option'); op.value=o.v; op.textContent=o.t; el?.appendChild(op); }); }
+      else if (f.t==='image' || f.t==='file'){ el=document.createElement('input'); el.type='file'; el.accept = (f.t==='image'?'image/*':'*/*'); el.addEventListener('change', e=>FILES[f.k]=e.target.files?.[0]||null); }
+      else if (f.t==='date'){ el=document.createElement('input'); el.type='date'; }
+      else if (f.t==='number'){ el=document.createElement('input'); el.type='number'; }
+      else { el=document.createElement('input'); el.type='text'; }
+      el.id = 'f-'+f.k; el.className='input'; if (f.req) el.required = true;
+      wrap.appendChild(label); wrap.appendChild(el); return wrap;
+    }
+
+    async function renderList(){
+      const mod = MODULES[CURRENT];
+      titleEl.textContent = mod.label;
+      const docs = await listDocs(CURRENT, mod.order);
+      listEl.innerHTML = '';
+      summary.classList.add('hidden');
+
+      if (CURRENT==='finance'){
+        let total=0; docs.forEach(v=>{ const a=Number(v.amount||0); total += v.type==='out'?-a:a; });
+        summary.classList.remove('hidden'); summary.innerHTML = `<div class="badge">Saldo Total: Rp ${total.toLocaleString('id-ID')}</div>`;
+      }
+
+      if (!docs.length){ listEl.innerHTML = '<div class="badge">Belum ada data.</div>'; return; }
+      docs.forEach(v=>{
+        const title = v.title||v.name||v.team||v.position||'Tanpa Judul';
+        const img = v.imageUrl||v.photoUrl||v.fileUrl;
+        const row = document.createElement('div'); row.className='item';
+        row.innerHTML = `
+          ${img?`<img class="thumb" src="${img}" onerror="this.src='https://placehold.co/120x80/252b41/9ca3af?text=FILE'">`:''}
+          <div style="flex:1">
+            <div style="font-weight:600">${title}</div>
+            <div style="opacity:.8;font-size:.9rem">${(v.desc||v.content||v.notes||v.note||'').toString().slice(0,120)}</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn" data-edit="${v.id}" style="background:#22c55e">Edit</button>
+            <button class="btn" data-del="${v.id}" style="background:#ef4444">Hapus</button>
+          </div>`;
+        listEl.appendChild(row);
+      });
+
+      listEl.querySelectorAll('[data-edit]').forEach(b=> b.onclick = ()=> openEditor(b.getAttribute('data-edit')) );
+      listEl.querySelectorAll('[data-del]').forEach(b=> b.onclick = async ()=>{
+        if (!confirm('Hapus item ini?')) return;
+        await deleteDocCol(CURRENT, b.getAttribute('data-del')); renderList();
+      });
+    }
+
+    async function openEditor(id=null){
+      EDIT_ID = id; FILES = {};
+      const mod = MODULES[CURRENT];
+      form.innerHTML = '';
+      (mod.fields||[]).forEach(f=> form.appendChild(inputEl(f)) );
+      if (id){
+        const data = await getOne(CURRENT, id);
+        (mod.fields||[]).forEach(f=>{
+          if (['image','file'].includes(f.t)) return;
+          const el = document.getElementById('f-'+f.k); if (el) el.value = data[f.k]||'';
+        });
+        modalTitle.textContent = 'Edit ' + mod.label;
+      } else {
+        modalTitle.textContent = 'Tambah ' + mod.label;
+      }
+      showModal(true);
+    }
+
+    document.getElementById('modal-close').onclick = ()=>showModal(false);
+    document.getElementById('modal-cancel').onclick = (e)=>{ e.preventDefault(); showModal(false); };
+    document.getElementById('modal-save').onclick = async (e)=>{
+      e.preventDefault();
+      const mod = MODULES[CURRENT];
+      const data = {};
+      (mod.fields||[]).forEach(f=>{
+        if (['image','file'].includes(f.t)) return;
+        const el = document.getElementById('f-'+f.k);
+        if (!el) return;
+        data[f.k] = (f.t==='number') ? Number(el.value||0) : el.value||'';
+      });
+      // uploads
+      for (const f of (mod.fields||[])){
+        if ((f.t==='image' || f.t==='file') && FILES[f.k]){
+          const url = await uploadToCloudinary(FILES[f.k]);
+          if (f.t==='image') data['imageUrl'] = url;
+          if (f.t==='file')  data['fileUrl'] = url;
+        }
+      }
+      if (CURRENT==='finance' && !data.date){
+        const d = new Date(); data.date = d.toISOString().slice(0,10);
+      }
+      if (EDIT_ID) await updateDocCol(CURRENT, EDIT_ID, data);
+      else await addDocCol(CURRENT, data);
+      showModal(false); renderList();
+    };
+
+    moduleSel.onchange = ()=>{
+      CURRENT = moduleSel.value;
+      const isRoles = CURRENT==='roles';
+      document.getElementById('btn-add').style.display = isRoles?'none':'inline-flex';
+      document.getElementById('summary').classList.add('hidden');
+      if (isRoles){ renderRoleManager(document.getElementById('list')); titleEl.textContent='Role User'; }
+      else renderList();
+    };
+
+    // auth guard & widget
+    onAuthStateChanged(auth, async (user)=>{
+      if (!user){ location.href='./login.html'; return; }
+      // role gate
+      const ref = doc(db, 'artifacts', 'karteji', 'users', user.uid, 'data', 'profile');
+      const s = await getDoc(ref); const role = (s.data()?.role||'anggota').toLowerCase();
+      if (role==='anggota'){ alert('Akses dashboard untuk pengurus.'); location.href='./index.html'; return; }
+      renderList();
+    });
+    watchAuthChanges();
+    document.getElementById('logout').onclick = async ()=>{ await doLogout(); location.href='./index.html'; };
+
+    lucide.createIcons();
+  </script>
+</body>
+</html>

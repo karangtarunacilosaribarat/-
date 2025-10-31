@@ -1,0 +1,228 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#0e0e10"/>
+  <title>KARTEJI - Beranda</title>
+  <link rel="stylesheet" href="./assets/css/style.css">
+  <link rel="stylesheet" href="./assets/css/glass.css">
+  <link rel="stylesheet" href="./assets/css/header.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    window.__app_id = "karteji";
+    window.__firebase_config = JSON.stringify({
+      apiKey: "AIzaSyAjNVTi5ZjZDLRcfxXmf2gWmHswSHM4d8E",
+      authDomain: "karteji.firebaseapp.com",
+      projectId: "karteji",
+      storageBucket: "karteji.firebasestorage.app",
+      messagingSenderId: "828706251907",
+      appId: "1:828706251907:web:54825185b074209c4fe7b6",
+      measurementId: "G-PPGRMBXGHW"
+    });
+    window.__owm_key = "00085e01e1469ff5e7492f3941b4b005"; // OpenWeatherMap key you provided
+  </script>
+</head>
+<body>
+  <header class="header glass shadow">
+    <div class="container" style="display:flex;justify-content:space-between;align-items:center">
+      <div class="brand"><img src="./assets/img/logo.png" width="32" height="32" style="border-radius:8px"><strong>KARTEJI</strong></div>
+      <nav class="nav">
+        <a class="link" href="#berita">Berita</a>
+        <a class="link" href="#umkm">UMKM</a>
+        <a class="link" href="#kegiatan">Kegiatan</a>
+        <a class="btn" id="auth-link" href="./login.html">Login</a>
+        <!-- Widget profil -->
+        <div id="user-widget" class="hidden" style="margin-left:8px">
+          <img id="user-avatar" src="./assets/img/logo.png" width="36" height="36" style="border-radius:999px;border:1px solid rgba(255,255,255,.2)">
+          <div>
+            <div id="user-name" style="font-size:.9rem;font-weight:600">Memuat...</div>
+            <div id="user-role" class="badge">ROLE</div>
+          </div>
+          <div id="user-menu" class="hidden glass rounded shadow" style="right:0"></div>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Widget Cuaca + Kalender + Imsak -->
+    <section class="grid grid-3" style="margin-top:16px">
+      <div class="card rounded" style="padding:16px; position:relative; overflow:hidden">
+        <h3 style="margin:0 0 8px 0">Cuaca Saat Ini</h3>
+        <canvas id="weather-canvas" width="600" height="240" style="width:100%;height:180px;border-radius:12px"></canvas>
+        <div id="weather-info" style="margin-top:8px;font-size:.95rem"></div>
+      </div>
+      <div class="card rounded" style="padding:16px">
+        <h3 style="margin:0 0 8px 0">Kalender (Libur Nasional)</h3>
+        <div id="calendar" style="font-size:.9rem"></div>
+      </div>
+      <div class="card rounded" style="padding:16px">
+        <h3 style="margin:0 0 8px 0">Imsak & Jadwal Salat</h3>
+        <div id="prayer-times" style="font-size:.95rem"></div>
+      </div>
+    </section>
+
+    <section id="berita" style="margin-top:24px">
+      <h2>Berita Terbaru</h2>
+      <div id="news-list" class="list"></div>
+    </section>
+
+    <section id="kegiatan" style="margin-top:24px">
+      <h2>Agenda & Kegiatan</h2>
+      <div id="events-list" class="list"></div>
+    </section>
+
+    <section id="umkm" style="margin-top:24px">
+      <h2>UMKM Warga</h2>
+      <div id="umkm-list" class="list"></div>
+    </section>
+  </main>
+
+  <footer class="container" style="opacity:.7;margin-top:24px">
+    &copy; <span id="year"></span> Karang Taruna Cilosari Barat (KARTEJI)
+  </footer>
+
+  <script type="module">
+    import { auth, db } from './scripts/firebase.js';
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import './scripts/ui.js';
+    import { watchAuthChanges } from './scripts/auth.js';
+
+    document.getElementById('year').textContent = new Date().getFullYear();
+    lucide.createIcons();
+    watchAuthChanges();
+
+    onAuthStateChanged(auth, (user)=>{
+      const link = document.getElementById('auth-link');
+      if (user) { link.textContent = 'Dashboard'; link.href = './dashboard.html'; }
+      else { link.textContent = 'Login'; link.href = './login.html'; }
+    });
+
+    // ---------- Weather (OpenWeather/Geoloc) + simple 3D-ish particles ----------
+    async function getPosition(){
+      return new Promise((resolve)=>{
+        navigator.geolocation.getCurrentPosition((pos)=>resolve({lat:pos.coords.latitude, lon:pos.coords.longitude}),()=>resolve({lat:-6.9667, lon:110.4167}),{enableHighAccuracy:true,timeout:5000});
+      });
+    }
+    function lerp(a,b,t){return a+(b-a)*t}
+    function drawParticles(ctx, type, w, h, t){
+      ctx.clearRect(0,0,w,h);
+      // gradient sky by time
+      const hour = new Date().getHours();
+      const isNight = hour < 5 || hour >= 19;
+      const g = ctx.createLinearGradient(0,0,0,h);
+      if (isNight){ g.addColorStop(0,'#0b1020'); g.addColorStop(1,'#172554'); }
+      else if (hour < 9){ g.addColorStop(0,'#0ea5e9'); g.addColorStop(1,'#60a5fa'); }
+      else if (hour < 16){ g.addColorStop(0,'#3b82f6'); g.addColorStop(1,'#60a5fa'); }
+      else { g.addColorStop(0,'#1d4ed8'); g.addColorStop(1,'#f97316'); }
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,w,h);
+
+      // draw simple 3D-ish clouds/raindrops
+      const count = type.includes('rain')||type.includes('drizzle') ? 120 : type.includes('cloud')? 30 : isNight? 20 : 10;
+      for (let i=0;i<count;i++){
+        const x = (Math.sin(i*12.9898 + t*0.002)*43758.5453) % 1;
+        const y = (Math.sin(i*78.233 + t*0.003)*96234.5453) % 1;
+        const px = Math.abs(x)*w;
+        const py = Math.abs(y)*h;
+        if (type.includes('rain')||type.includes('drizzle')){
+          ctx.strokeStyle = 'rgba(180,200,255,.75)';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(px, py-8);
+          ctx.lineTo(px+2, py+10);
+          ctx.stroke();
+        } else if (type.includes('cloud')){
+          ctx.fillStyle = 'rgba(255,255,255,.85)';
+          ctx.beginPath();
+          ctx.ellipse(px, py, 24, 16, 0, 0, Math.PI*2);
+          ctx.fill();
+          ctx.fillStyle = 'rgba(0,0,0,.07)';
+          ctx.fillRect(px-24, py+16, 48, 3);
+        } else if (isNight){
+          ctx.fillStyle = 'rgba(255,255,255,.9)';
+          ctx.fillRect(px, py, 2, 2);
+        } else {
+          // sunny sparkles
+          ctx.fillStyle = 'rgba(255,255,255,.5)';
+          ctx.beginPath(); ctx.arc(px, py, 1.5, 0, Math.PI*2); ctx.fill();
+        }
+      }
+    }
+    async function loadWeather(){
+      const {lat, lon} = await getPosition();
+      let type='clear', temp='';
+      try {
+        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${window.__owm_key}&units=metric&lang=id`;
+        const r = await fetch(url); const j = await r.json();
+        type = (j.weather?.[0]?.main || 'Clear').toLowerCase();
+        temp = Math.round(j.main?.temp) + '°C · ' + (j.weather?.[0]?.description||'cerah');
+      } catch(e){ temp = 'Gagal memuat cuaca'; }
+      const info = document.getElementById('weather-info');
+      info.textContent = temp;
+
+      const c = document.getElementById('weather-canvas');
+      const ctx = c.getContext('2d');
+      let t=0; function loop(){ t+=16; drawParticles(ctx, type, c.width, c.height, t); requestAnimationFrame(loop); }
+      loop();
+    }
+    loadWeather();
+
+    // ---------- Calendar (Indonesian holidays) ----------
+    async function loadCalendar(){
+      const el = document.getElementById('calendar');
+      try{
+        const r = await fetch('https://api-harilibur.vercel.app/api');
+        const data = await r.json();
+        const now = new Date(); const m = now.getMonth()+1; const y = now.getFullYear();
+        const monthData = data.filter(x => x.is_national_holiday && (new Date(x.holiday_date).getMonth()+1)===m && (new Date(x.holiday_date).getFullYear())===y);
+        const list = monthData.map(x => {
+          const d = new Date(x.holiday_date);
+          const ds = d.toLocaleDateString('id-ID',{weekday:'long', day:'2-digit', month:'long'});
+          return `<div>🗓️ <span style="color:#fca5a5">${ds}</span> — ${x.holiday_name}</div>`;
+        });
+        el.innerHTML = list.join('') || '<div>Tidak ada libur nasional bulan ini.</div>';
+      }catch(e){ el.textContent = 'Gagal memuat kalender.'; }
+    }
+    loadCalendar();
+
+    // ---------- Prayer/Imsak (Aladhan by lat/lon) ----------
+    async function loadPrayer(){
+      const pt = document.getElementById('prayer-times');
+      try{
+        const pos = await new Promise(res => navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lon:p.coords.longitude}),()=>res({lat:-6.9667,lon:110.4167})));
+        const ts = Math.floor(Date.now()/1000);
+        const u = `https://api.aladhan.com/v1/timings/${ts}?latitude=${pos.lat}&longitude=${pos.lon}&method=20`;
+        const r = await fetch(u); const j = await r.json();
+        const t = j.data.timings;
+        const rows = [
+          ['Imsak', t.Imsak], ['Subuh', t.Fajr], ['Dzuhur', t.Dhuhr],
+          ['Ashar', t.Asr], ['Maghrib', t.Maghrib], ['Isya', t.Isha]
+        ].map(([k,v])=>`<div><span class="badge">${k}</span> ${v}</div>`);
+        pt.innerHTML = rows.join('');
+      }catch(e){ pt.textContent = 'Gagal memuat jadwal.'; }
+    }
+    loadPrayer();
+
+    // ---------- Content previews ----------
+    async function preview(col, mountId){
+      const ref = collection(db, 'artifacts', 'karteji', col);
+      const qRef = query(ref, orderBy('createdAt','desc'), limit(4));
+      const snap = await getDocs(qRef);
+      const el = document.getElementById(mountId);
+      if (snap.empty){ el.innerHTML = '<div class="badge">Belum ada data.</div>'; return; }
+      const rows = [];
+      snap.forEach(d=>{
+        const v = d.data(); const title = v.title||v.name||'Tanpa Judul';
+        const img = v.imageUrl||v.photoUrl||'https://placehold.co/120x80/252b41/9ca3af?text=KARTEJI';
+        rows.push(`<div class="item"><img class="thumb" src="${img}"><div><div style="font-weight:600">${title}</div><div style="opacity:.8;font-size:.9rem">${(v.desc||v.content||'').toString().slice(0,90)}</div></div></div>`);
+      });
+      el.innerHTML = `<div class="list">${rows.join('')}</div>`;
+    }
+    preview('news','news-list'); preview('events','events-list'); preview('umkm','umkm-list');
+  </script>
+</body>
+</html>

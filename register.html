@@ -1,0 +1,50 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Daftar - KARTEJI</title>
+  <link rel="stylesheet" href="./assets/css/style.css">
+  <link rel="stylesheet" href="./assets/css/glass.css">
+  <script>
+    window.__app_id = "karteji";
+    window.__firebase_config = JSON.stringify({
+      apiKey: "AIzaSyAjNVTi5ZjZDLRcfxXmf2gWmHswSHM4d8E",
+      authDomain: "karteji.firebaseapp.com",
+      projectId: "karteji",
+      storageBucket: "karteji.firebasestorage.app",
+      messagingSenderId: "828706251907",
+      appId: "1:828706251907:web:54825185b074209c4fe7b6",
+      measurementId: "G-PPGRMBXGHW"
+    });
+  </script>
+</head>
+<body>
+  <div class="container" style="display:flex;align-items:center;justify-content:center;min-height:100vh">
+    <div class="card rounded" style="padding:24px;max-width:460px;width:100%">
+      <h2 style="margin-top:0">Daftar Akun</h2>
+      <form id="f">
+        <input id="name" class="input" placeholder="Nama" required style="margin-bottom:10px"/>
+        <input id="email" class="input" placeholder="Email" type="email" required style="margin-bottom:10px"/>
+        <input id="pass" class="input" placeholder="Kata sandi (min 6)" type="password" required minlength="6" style="margin-bottom:10px"/>
+        <button class="btn" type="submit" style="width:100%">Daftar</button>
+      </form>
+      <div id="msg" style="margin-top:8px;opacity:.85"></div>
+      <div style="margin-top:8px">Sudah punya akun? <a class="link" href="./login.html">Masuk</a></div>
+    </div>
+  </div>
+  <script type="module">
+    import { handleRegister } from './scripts/auth.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { auth } from './scripts/firebase.js';
+    onAuthStateChanged(auth,(u)=>{ if(u) location.href='./dashboard.html'; });
+    const f = document.getElementById('f'), msg=document.getElementById('msg');
+    f.onsubmit = async (e)=>{
+      e.preventDefault();
+      try{ await handleRegister(name.value, email.value, pass.value); }
+      catch(err){ msg.textContent = err.message || 'Gagal daftar'; }
+    };
+  </script>
+</body>
+</html>
