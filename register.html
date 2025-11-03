@@ -7,6 +7,7 @@
   <title>Daftar - KARTEJI</title>
   <link rel="stylesheet" href="./assets/css/style.css">
   <link rel="stylesheet" href="./assets/css/glass.css">
+  <link rel="stylesheet" href="./assets/css/responsive.css">
   <script>
     window.__app_id = "karteji";
     window.__firebase_config = JSON.stringify({
@@ -21,17 +22,30 @@
   </script>
 </head>
 <body>
-  <div class="container" style="display:flex;align-items:center;justify-content:center;min-height:100vh">
-    <div class="card rounded" style="padding:24px;max-width:460px;width:100%">
-      <h2 style="margin-top:0">Daftar Akun</h2>
+  <div class="container" style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px">
+    <div class="card rounded" style="padding:32px;max-width:480px;width:100%">
+      <div style="text-align:center;margin-bottom:24px">
+        <img src="./assets/img/logo.png" width="64" height="64" style="border-radius:16px;margin-bottom:16px">
+        <h2 style="margin:0 0 8px 0">Buat Akun Baru</h2>
+        <p style="opacity:.7;margin:0">Bergabung dengan komunitas KARTEJI</p>
+      </div>
       <form id="f">
-        <input id="name" class="input" placeholder="Nama" required style="margin-bottom:10px"/>
-        <input id="email" class="input" placeholder="Email" type="email" required style="margin-bottom:10px"/>
-        <input id="pass" class="input" placeholder="Kata sandi (min 6)" type="password" required minlength="6" style="margin-bottom:10px"/>
-        <button class="btn" type="submit" style="width:100%">Daftar</button>
+        <div style="margin-bottom:16px">
+          <label style="display:block;margin-bottom:6px;opacity:.85;font-size:.9rem">Nama Lengkap</label>
+          <input id="name" class="input" placeholder="Masukkan nama lengkap" required/>
+        </div>
+        <div style="margin-bottom:16px">
+          <label style="display:block;margin-bottom:6px;opacity:.85;font-size:.9rem">Email</label>
+          <input id="email" class="input" placeholder="nama@email.com" type="email" required/>
+        </div>
+        <div style="margin-bottom:20px">
+          <label style="display:block;margin-bottom:6px;opacity:.85;font-size:.9rem">Kata Sandi</label>
+          <input id="pass" class="input" placeholder="Minimal 6 karakter" type="password" required minlength="6"/>
+        </div>
+        <button class="btn" type="submit" style="width:100%;padding:0.875rem;font-size:1rem">Daftar Sekarang</button>
       </form>
-      <div id="msg" style="margin-top:8px;opacity:.85"></div>
-      <div style="margin-top:8px">Sudah punya akun? <a class="link" href="./login.html">Masuk</a></div>
+      <div id="msg" style="margin-top:12px;padding:10px;border-radius:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);display:none"></div>
+      <div style="margin-top:20px;text-align:center;padding-top:20px;border-top:1px solid rgba(255,255,255,.08)">Sudah punya akun? <a class="link" href="./login.html">Masuk</a></div>
     </div>
   </div>
   <script type="module">
@@ -42,8 +56,9 @@
     const f = document.getElementById('f'), msg=document.getElementById('msg');
     f.onsubmit = async (e)=>{
       e.preventDefault();
+      msg.style.display = 'none';
       try{ await handleRegister(name.value, email.value, pass.value); }
-      catch(err){ msg.textContent = err.message || 'Gagal daftar'; }
+      catch(err){ msg.textContent = err.message || 'Gagal daftar'; msg.style.display = 'block'; }
     };
   </script>
 </body>

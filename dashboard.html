@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="./assets/css/style.css">
   <link rel="stylesheet" href="./assets/css/glass.css">
   <link rel="stylesheet" href="./assets/css/dashboard.css">
+  <link rel="stylesheet" href="./assets/css/responsive.css">
   <script src="https://unpkg.com/lucide@latest"></script>
   <script>
     window.__app_id = "karteji";
@@ -53,11 +54,11 @@
     </div>
   </header>
 
-  <main class="container">
-    <div id="panel" class="card rounded" style="padding:16px">
+  <main class="container" style="margin-top:24px">
+    <div id="panel" class="card rounded" style="padding:24px">
       <div class="toolbar">
-        <div class="title"><h3 id="panel-title" style="margin:0">Berita</h3></div>
-        <button id="btn-add" class="btn">Tambah</button>
+        <div class="title"><h3 id="panel-title" style="margin:0;display:flex;align-items:center;gap:10px"><i data-lucide="file-text" style="width:24px;height:24px"></i>Berita</h3></div>
+        <button id="btn-add" class="btn"><i data-lucide="plus" style="width:16px;height:16px"></i>Tambah</button>
       </div>
       <div id="summary" class="hidden"></div>
       <div id="list" class="list"></div>
@@ -65,15 +66,15 @@
   </main>
 
   <div id="modal" class="modal-backdrop">
-    <div class="modal card rounded" style="padding:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <h3 id="modal-title" style="margin:0">Editor</h3>
-        <button id="modal-close" class="btn" style="background:transparent;border:1px solid rgba(255,255,255,.2)">Tutup</button>
+    <div class="modal card rounded" style="padding:24px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <h3 id="modal-title" style="margin:0;display:flex;align-items:center;gap:8px"><i data-lucide="edit" style="width:20px;height:20px"></i>Editor</h3>
+        <button id="modal-close" class="btn" style="background:transparent;border:1px solid rgba(255,255,255,.2);padding:0.5rem"><i data-lucide="x" style="width:20px;height:20px"></i></button>
       </div>
-      <form id="form" class="grid" style="margin-top:12px"></form>
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
-        <button id="modal-cancel" class="btn" style="background:transparent;border:1px solid rgba(255,255,255,.2)">Batal</button>
-        <button id="modal-save" class="btn">Simpan</button>
+      <form id="form" class="grid" style="gap:16px"></form>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,.08)">
+        <button id="modal-cancel" class="btn" style="background:transparent;border:1px solid rgba(255,255,255,.2)"><i data-lucide="x" style="width:16px;height:16px"></i>Batal</button>
+        <button id="modal-save" class="btn" style="background:#10b981"><i data-lucide="check" style="width:16px;height:16px"></i>Simpan</button>
       </div>
     </div>
   </div>

@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="./assets/css/style.css">
   <link rel="stylesheet" href="./assets/css/glass.css">
   <link rel="stylesheet" href="./assets/css/header.css">
+  <link rel="stylesheet" href="./assets/css/responsive.css">
   <script src="https://unpkg.com/lucide@latest"></script>
   <script>
     window.__app_id = "karteji";
@@ -48,40 +49,59 @@
 
   <main class="container">
     <!-- Widget Cuaca + Kalender + Imsak -->
-    <section class="grid grid-3" style="margin-top:16px">
-      <div class="card rounded" style="padding:16px; position:relative; overflow:hidden">
-        <h3 style="margin:0 0 8px 0">Cuaca Saat Ini</h3>
-        <canvas id="weather-canvas" width="600" height="240" style="width:100%;height:180px;border-radius:12px"></canvas>
-        <div id="weather-info" style="margin-top:8px;font-size:.95rem"></div>
+    <section class="grid grid-3" style="margin-top:24px">
+      <div class="card rounded" style="padding:20px; position:relative; overflow:hidden">
+        <h3 style="margin:0 0 12px 0; display:flex; align-items:center; gap:8px">
+          <i data-lucide="cloud-sun" style="width:20px;height:20px"></i>
+          Cuaca Saat Ini
+        </h3>
+        <canvas id="weather-canvas" width="600" height="240" style="width:100%;height:180px;border-radius:12px;margin-bottom:12px"></canvas>
+        <div id="weather-info" style="font-size:.95rem;opacity:.9"></div>
       </div>
-      <div class="card rounded" style="padding:16px">
-        <h3 style="margin:0 0 8px 0">Kalender (Libur Nasional)</h3>
-        <div id="calendar" style="font-size:.9rem"></div>
+      <div class="card rounded" style="padding:20px">
+        <h3 style="margin:0 0 12px 0; display:flex; align-items:center; gap:8px">
+          <i data-lucide="calendar-days" style="width:20px;height:20px"></i>
+          Kalender (Libur Nasional)
+        </h3>
+        <div id="calendar" style="font-size:.9rem;line-height:1.8"></div>
       </div>
-      <div class="card rounded" style="padding:16px">
-        <h3 style="margin:0 0 8px 0">Imsak & Jadwal Salat</h3>
-        <div id="prayer-times" style="font-size:.95rem"></div>
+      <div class="card rounded" style="padding:20px">
+        <h3 style="margin:0 0 12px 0; display:flex; align-items:center; gap:8px">
+          <i data-lucide="sun-moon" style="width:20px;height:20px"></i>
+          Jadwal Salat
+        </h3>
+        <div id="prayer-times" style="font-size:.95rem;line-height:1.8"></div>
       </div>
     </section>
 
-    <section id="berita" style="margin-top:24px">
-      <h2>Berita Terbaru</h2>
-      <div id="news-list" class="list"></div>
+    <section id="berita" style="margin-top:48px">
+      <h2 style="display:flex;align-items:center;gap:10px">
+        <i data-lucide="newspaper" style="width:28px;height:28px"></i>
+        Berita Terbaru
+      </h2>
+      <div id="news-list" class="card rounded" style="padding:20px"></div>
     </section>
 
-    <section id="kegiatan" style="margin-top:24px">
-      <h2>Agenda & Kegiatan</h2>
-      <div id="events-list" class="list"></div>
+    <section id="kegiatan" style="margin-top:48px">
+      <h2 style="display:flex;align-items:center;gap:10px">
+        <i data-lucide="calendar-check" style="width:28px;height:28px"></i>
+        Agenda & Kegiatan
+      </h2>
+      <div id="events-list" class="card rounded" style="padding:20px"></div>
     </section>
 
-    <section id="umkm" style="margin-top:24px">
-      <h2>UMKM Warga</h2>
-      <div id="umkm-list" class="list"></div>
+    <section id="umkm" style="margin-top:48px">
+      <h2 style="display:flex;align-items:center;gap:10px">
+        <i data-lucide="store" style="width:28px;height:28px"></i>
+        UMKM Warga
+      </h2>
+      <div id="umkm-list" class="card rounded" style="padding:20px"></div>
     </section>
   </main>
 
-  <footer class="container" style="opacity:.7;margin-top:24px">
-    &copy; <span id="year"></span> Karang Taruna Cilosari Barat (KARTEJI)
+  <footer class="container" style="opacity:.7;margin-top:64px;padding-top:32px;padding-bottom:32px;border-top:1px solid rgba(255,255,255,.08);text-align:center">
+    <p style="margin:0">&copy; <span id="year"></span> Karang Taruna Cilosari Barat (KARTEJI)</p>
+    <p style="margin:8px 0 0 0;font-size:.875rem;opacity:.8">Portal Informasi & Manajemen Komunitas</p>
   </footer>
 
   <script type="module">
@@ -218,9 +238,9 @@
       snap.forEach(d=>{
         const v = d.data(); const title = v.title||v.name||'Tanpa Judul';
         const img = v.imageUrl||v.photoUrl||'https://placehold.co/120x80/252b41/9ca3af?text=KARTEJI';
-        rows.push(`<div class="item"><img class="thumb" src="${img}"><div><div style="font-weight:600">${title}</div><div style="opacity:.8;font-size:.9rem">${(v.desc||v.content||'').toString().slice(0,90)}</div></div></div>`);
+        rows.push(`<div class="item"><img class="thumb" src="${img}"><div style="flex:1"><div style="font-weight:600">${title}</div><div style="opacity:.8;font-size:.9rem;margin-top:4px">${(v.desc||v.content||'').toString().slice(0,90)}</div></div></div>`);
       });
-      el.innerHTML = `<div class="list">${rows.join('')}</div>`;
+      el.innerHTML = rows.join('') || '<div class="badge">Belum ada data.</div>';
     }
     preview('news','news-list'); preview('events','events-list'); preview('umkm','umkm-list');
   </script>

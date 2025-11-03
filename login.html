@@ -7,6 +7,7 @@
   <title>Masuk - KARTEJI</title>
   <link rel="stylesheet" href="./assets/css/style.css">
   <link rel="stylesheet" href="./assets/css/glass.css">
+  <link rel="stylesheet" href="./assets/css/responsive.css">
   <script>
     window.__app_id = "karteji";
     window.__firebase_config = JSON.stringify({
@@ -21,16 +22,26 @@
   </script>
 </head>
 <body>
-  <div class="container" style="display:flex;align-items:center;justify-content:center;min-height:100vh">
-    <div class="card rounded" style="padding:24px;max-width:420px;width:100%">
-      <h2 style="margin-top:0">Masuk</h2>
+  <div class="container" style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px">
+    <div class="card rounded" style="padding:32px;max-width:440px;width:100%">
+      <div style="text-align:center;margin-bottom:24px">
+        <img src="./assets/img/logo.png" width="64" height="64" style="border-radius:16px;margin-bottom:16px">
+        <h2 style="margin:0 0 8px 0">Selamat Datang</h2>
+        <p style="opacity:.7;margin:0">Masuk ke akun KARTEJI Anda</p>
+      </div>
       <form id="f">
-        <input id="email" class="input" placeholder="Email" type="email" required style="margin-bottom:10px"/>
-        <input id="pass" class="input" placeholder="Kata sandi" type="password" required style="margin-bottom:10px"/>
-        <button class="btn" type="submit" style="width:100%">Masuk</button>
+        <div style="margin-bottom:16px">
+          <label style="display:block;margin-bottom:6px;opacity:.85;font-size:.9rem">Email</label>
+          <input id="email" class="input" placeholder="nama@email.com" type="email" required/>
+        </div>
+        <div style="margin-bottom:20px">
+          <label style="display:block;margin-bottom:6px;opacity:.85;font-size:.9rem">Kata Sandi</label>
+          <input id="pass" class="input" placeholder="Masukkan kata sandi" type="password" required/>
+        </div>
+        <button class="btn" type="submit" style="width:100%;padding:0.875rem;font-size:1rem">Masuk</button>
       </form>
-      <div id="msg" style="margin-top:8px;opacity:.85"></div>
-      <div style="margin-top:8px">Belum punya akun? <a class="link" href="./register.html">Daftar</a></div>
+      <div id="msg" style="margin-top:12px;padding:10px;border-radius:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);display:none"></div>
+      <div style="margin-top:20px;text-align:center;padding-top:20px;border-top:1px solid rgba(255,255,255,.08)">Belum punya akun? <a class="link" href="./register.html">Daftar Sekarang</a></div>
     </div>
   </div>
   <script type="module">
@@ -41,8 +52,9 @@
     const f = document.getElementById('f'), msg=document.getElementById('msg');
     f.onsubmit = async (e)=>{
       e.preventDefault();
+      msg.style.display = 'none';
       try{ await handleLogin(email.value, pass.value); }
-      catch(err){ msg.textContent = err.message || 'Gagal masuk'; }
+      catch(err){ msg.textContent = err.message || 'Gagal masuk'; msg.style.display = 'block'; }
     };
   </script>
 </body>
